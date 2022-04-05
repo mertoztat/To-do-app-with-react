@@ -1,4 +1,4 @@
-### [Live Project](https://react-to-do-app-project.netlify.app/).
+### Click on [Live Project](https://react-to-do-app-project.netlify.app/).
 
 
 # Getting Started with Create React App
