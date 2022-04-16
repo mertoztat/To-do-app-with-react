@@ -1,72 +1,95 @@
 import "./App.css";
 import { useState, useEffect } from "react";
-import Header from "./components/Header";
-import Section from "./components/Section";
-import Footer from "./components/Footer";
+import { v4 as uuidv4 } from "uuid";
 
-function App() {
-  const [inputText, setInputText] = useState("");
-  const [todos, setTodos] = useState([]);
-  const [status, setStatus] = useState("all");
-  const [filteredTodos, setFilteredTodos] = useState([]);
+import {
+	Header,
+	Todo,
+	Footer
+} from "./components";
 
-  useEffect(() => {
-    getTodos();
-  }, []);
+import {
+	LocalSave,
+	FilterTypes
+} from "./utils";
 
-  useEffect(() => {
-    statusHandler();
-    saveTodos();
-  }, [todos, status]);
+const App = () => {
+	const [todos, setTodos] = useState([]);
+	const [filter, setFilter] = useState("All");
+	const [filteredTodos, setFilteredTodos] = useState([]);
 
-  const saveTodos = () => {
-    localStorage.setItem("todos", JSON.stringify(todos));
-  };
-  const getTodos = () => {
-    if (localStorage.getItem("todos") === null) {
-      localStorage.setItem("todos", JSON.stringify([]));
-    } else {
-      let todoLocal = JSON.parse(localStorage.getItem("todos"));
-      setTodos(todoLocal);
-    }
-  };
+	useEffect(() => {
+		const todoLocal = LocalSave.get("todos");
+		setTodos(todoLocal);
+		filterHandler();
+	}, []);
 
-  const statusHandler = () => {
-    switch (status) {
-      case "completed":
-        setFilteredTodos(todos.filter((todo) => todo.completed === true));
-        break;
-      case "active":
-        setFilteredTodos(todos.filter((todo) => todo.completed === false));
-        break;
-      default:
-        setFilteredTodos(todos);
-        break;
-    }
-  };
+	useEffect(() => {
+		filterHandler();
+	}, [todos, filter]);
 
-  return (
-    <div className="todoapp">
-      <Header
-        inputText={inputText}
-        setInputText={setInputText}
-        todos={todos}
-        setTodos={setTodos}
-      />
-      <Section
-        todos={todos}
-        setTodos={setTodos}
-        filteredTodos={filteredTodos}
-      />
-      <Footer
-        todos={todos}
-        setTodos={setTodos}
-        status={status}
-        setStatus={setStatus}
-        filteredTodos={filteredTodos}
-      />
-    </div>
-  );
+	const filterHandler = () => {
+		if (FilterTypes[filter]) {
+			const filteredTodos = FilterTypes[filter](todos);
+			setFilteredTodos(filteredTodos);
+			return;
+		}
+		setFilteredTodos(todos);
+	};
+
+	const TodoHandler = {
+		add: (text) => {
+			const newTodos = [...todos, { text, id: uuidv4() }];
+			setTodos(newTodos);
+			LocalSave.save("todos", newTodos);
+		},
+		delete: (id) => {
+			const newTodos = todos.filter(todo => todo.id !== id);
+			setTodos(newTodos);
+			LocalSave.save("todos", newTodos);
+		},
+		toggle: ({ id, checked }) => {
+			const newTodos = todos.map((todo) => todo.id === id ? {
+				...todo,
+				completed: checked,
+			} : todo);
+			setTodos(newTodos);
+			LocalSave.save("todos", newTodos);
+		}
+	}
+
+	const clearCompleted = () => {
+		const newTodos = todos.filter(todo => !todo.completed);
+		setTodos(newTodos);
+		LocalSave.save("todos", newTodos);
+	}
+
+	return (
+		<div className="todoapp">
+			<Header
+				onSubmit={(text) => TodoHandler.add(text)}
+			/>
+			<main>
+				<input className="toggle-all" type="checkbox" />
+				<ul className="todo-list">
+					{filteredTodos.map((todo) => (
+						<Todo
+							key={todo.id}
+							todo={todo}
+							onCompleteChange={(checked) => TodoHandler.toggle({ id: todo.id, checked })}
+							onDelete={() => TodoHandler.delete(todo.id)}
+						/>
+					))}
+				</ul>
+			</main>
+			<Footer
+				todoCount={todos?.length || 0}
+				currentFilter={filter}
+				onFilterChange={(filter) => setFilter(filter)}
+				onClearCompleted={clearCompleted}
+			/>
+		</div>
+	);
 }
 
 export default App;
