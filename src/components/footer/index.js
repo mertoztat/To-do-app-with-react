@@ -10,12 +10,12 @@ const Footer = ({
 	return (
 		<footer className="footer">
 			<span className="todo-count">
-				<strong>{todoCount}</strong> items left
+				<b>{todoCount}</b> items left
 			</span>
 
 			<ul className="filters">
-				{Object.keys(FilterTypes).map((filter) => (
-					<li>
+				{Object.keys(FilterTypes).map((filter, index) => (
+					<li key={index}>
 						<a
 							onClick={() => onFilterChange(filter)}
 							className={currentFilter == filter ? "selected" : ""}

@@ -70,7 +70,6 @@ const App = () => {
 				onSubmit={(text) => TodoHandler.add(text)}
 			/>
 			<main>
-				<input className="toggle-all" type="checkbox" />
 				<ul className="todo-list">
 					{filteredTodos.map((todo) => (
 						<Todo
